@@ -11,7 +11,6 @@ from telebot import apihelper, TeleBot
 
 from exceptions import (
     EmptyHomeworksError,
-    EnvironmentEvariablesError,
     HTTPStatusError,
     RequestError,
     SendMessageError
@@ -50,13 +49,16 @@ def check_tokens():
         if variable_value is None:
             no_tokens.append(variable)
     if no_tokens:
-        raise EnvironmentEvariablesError(
-            f'Отсутствует обязательная переменная окружения {no_tokens}'
+        logger.critical(
+            f'Отсутствует обязательная переменная окружения {no_tokens}. '
+            'Работа бота остановлена'
         )
+        return False
     else:
         logger.info(
             'Закончена проверка доступности переменных окружения - успешно.'
         )
+        return True
 
 
 def send_message(bot, message):
@@ -67,7 +69,7 @@ def send_message(bot, message):
             chat_id=TELEGRAM_CHAT_ID,
             text=message,
         )
-    except apihelper.ApiException as error:
+    except (apihelper.ApiException, requests.RequestException) as error:
         raise SendMessageError(f'Ошибка {error} при отправке сообщения')
     else:
         logger.debug('Сообщение отправлено')
@@ -142,13 +144,10 @@ def parse_status(homework):
 
 def main():
     """Основная логика работы бота."""
-    bot = TeleBot(token=TELEGRAM_TOKEN)
-    try:
-        check_tokens()
-    except EnvironmentEvariablesError as error:
-        logger.critical(error)
-        send_message(bot, error)
+    if not check_tokens():
         sys.exit()
+
+    bot = TeleBot(token=TELEGRAM_TOKEN)
 
     timestamp = int(time.time())
 

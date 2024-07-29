@@ -2,10 +2,6 @@ class HTTPStatusError(Exception):
     """Запрос не выполнен успешно."""
 
 
-class EnvironmentEvariablesError(Exception):
-    """Отсутствуют обязательные переменные окружения."""
-
-
 class SendMessageError(Exception):
     """Ошибка при отправке сообщения."""
 
